@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lloyds Mortgage Calculator</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--green:#006A4E;--green-light:#E1F5EE;--green-mid:#9FE1CB;--green-dark:#004D38;--text:#1a1a1a;--text-muted:#555;--text-hint:#888;--border:#ddd;--bg:#f5f5f5;--white:#fff;--radius:8px;--radius-lg:12px}
+body{font-family:Arial,sans-serif;font-size:15px;background:var(--bg);color:var(--text);min-height:100vh}
+.site-header{background:var(--green);color:white;padding:16px 24px;display:flex;align-items:center;gap:14px}
+.logo{width:40px;height:40px;background:white;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.logo svg{width:24px;height:24px;fill:var(--green)}
+.site-header h1{font-size:18px;font-weight:bold}
+.site-header p{font-size:12px;opacity:0.85;margin-top:2px}
+.container{max-width:820px;margin:0 auto;padding:28px 16px}
+.steps{display:flex;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);margin-bottom:24px;background:white}
+.step{flex:1;padding:12px 8px;text-align:center;font-size:13px;cursor:pointer;border:none;background:white;color:var(--text-muted);border-right:1px solid var(--border);transition:background 0.15s}
+.step:last-child{border-right:none}
+.step .snum{display:block;font-size:10px;color:var(--text-hint);margin-bottom:2px}
+.step.active{background:var(--green);color:white;font-weight:bold}
+.step.active .snum{color:rgba(255,255,255,0.75)}
+.step.done{background:var(--green-light);color:var(--green)}
+.card{background:white;border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.07)}
+.card-title{font-size:14px;font-weight:bold;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-icon{width:28px;height:28px;background:var(--green-light);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.field{margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+.field label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);margin-bottom:6px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:500px){.row2{grid-template-columns:1fr}}
+.input-wrap{position:relative}
+.input-prefix{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text-hint);pointer-events:none}
+input[type=number],select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:Arial,sans-serif;color:var(--text);background:white;-webkit-appearance:none;transition:border-color 0.15s}
+input[type=number]:focus,select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(0,106,78,0.1)}
+input.has-prefix{padding-left:26px}
+input.error{border-color:#cc3300}
+.field-hint{font-size:11px;color:var(--text-hint);margin-top:4px}
+.field-error{font-size:11px;color:#cc3300;margin-top:4px;display:none}
+.tooltip{width:18px;height:18px;background:#eee;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-muted);cursor:help;position:relative;flex-shrink:0}
+.tooltip-box{display:none;position:absolute;bottom:26px;left:50%;transform:translateX(-50%);background:#222;color:white;font-size:12px;padding:8px 10px;border-radius:var(--radius);width:220px;line-height:1.5;z-index:100;pointer-events:none;white-space:normal;font-weight:normal}
+.tooltip:hover .tooltip-box,.tooltip:focus .tooltip-box{display:block}
+.slider-wrap{display:flex;align-items:center;gap:12px}
+.slider-wrap input[type=range]{flex:1;padding:0;border:none;box-shadow:none;-webkit-appearance:none;height:4px;background:#ddd;border-radius:2px;cursor:pointer}
+.slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:var(--green);border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.2)}
+.slider-val{font-size:14px;font-weight:bold;min-width:56px;text-align:right;color:var(--text)}
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.type-opt{padding:14px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all 0.15s;background:#fafafa;user-select:none}
+.type-opt:hover{border-color:var(--green);background:var(--green-light)}
+.type-opt.selected{border:2px solid var(--green);background:var(--green-light)}
+.type-opt-title{font-size:13px;font-weight:bold;color:var(--text)}
+.type-opt.selected .type-opt-title{color:var(--green-dark)}
+.type-opt-desc{font-size:11px;color:var(--text-hint);margin-top:3px}
+.type-opt.selected .type-opt-desc{color:var(--green)}
+.scenario-bar{background:white;border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.07);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.scenario-bar label{font-size:13px;color:var(--text-muted);white-space:nowrap}
+.scenario-bar select{max-width:340px;flex:1}
+.btn-row{display:flex;gap:12px;margin-top:20px}
+.btn-primary{flex:1;padding:13px;background:var(--green);color:white;border:none;border-radius:var(--radius);font-size:14px;font-weight:bold;cursor:pointer;font-family:Arial,sans-serif;transition:background 0.15s}
+.btn-primary:hover{background:var(--green-dark)}
+.btn-secondary{padding:13px 20px;background:white;color:var(--text-muted);border:1px solid var(--border);border-radius:var(--radius);font-size:14px;cursor:pointer;font-family:Arial,sans-serif}
+.btn-secondary:hover{background:#f0f0f0}
+.results-hero{background:var(--green);border-radius:var(--radius-lg);padding:24px;text-align:center;color:white;margin-bottom:16px}
+.results-hero .hero-label{font-size:13px;opacity:0.8;margin-bottom:6px}
+.results-hero .hero-amount{font-size:42px;font-weight:bold;margin-bottom:4px}
+.results-hero .hero-sub{font-size:13px;opacity:0.7}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+@media(max-width:480px){.metrics{grid-template-columns:1fr 1fr}}
+.metric{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center}
+.metric .m-label{font-size:11px;color:var(--text-hint);margin-bottom:4px}
+.metric .m-val{font-size:16px;font-weight:bold;color:var(--text)}
+.breakdown-bar{height:16px;border-radius:8px;overflow:hidden;display:flex;margin:10px 0 14px}
+.bar-p{background:var(--green);transition:width 0.4s ease}
+.bar-i{background:var(--green-mid);transition:width 0.4s ease}
+.bar-f{background:#ccc}
+.legend{display:flex;gap:16px;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.adj-table{width:100%;border-collapse:collapse;font-size:13px}
+.adj-table tr{border-bottom:1px solid #f0f0f0}
+.adj-table tr:last-child{border-bottom:none}
+.adj-table td{padding:9px 4px}
+.adj-table td:first-child{color:var(--text-muted)}
+.adj-table td:last-child{text-align:right}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:bold;background:var(--green-light);color:var(--green-dark)}
+.badge.warn{background:#FFF3CD;color:#856404}
+.disclaimer{font-size:11px;color:var(--text-hint);line-height:1.6;margin-top:16px;padding:12px;background:#fafafa;border-radius:var(--radius);border-left:3px solid var(--border)}
+.test-panel{background:#1e1e1e;border-radius:var(--radius-lg);padding:16px 20px;margin-top:24px;color:#ccc;font-family:'Courier New',monospace;font-size:12px;line-height:1.9}
+.test-panel h3{color:#9FE1CB;margin-bottom:12px;font-size:13px}
+.test-pass{color:#6fcf97}
+.test-fail{color:#eb5757}
+.test-info{color:#aaa}
+.run-tests-btn{margin-top:8px;padding:8px 18px;background:var(--green);color:white;border:none;border-radius:var(--radius);font-size:13px;cursor:pointer;font-family:Arial,sans-serif}
+.panel{display:none}
+.panel.active{display:block}
+.site-footer{text-align:center;font-size:11px;color:var(--text-hint);padding:24px 16px;border-top:1px solid var(--border);margin-top:8px}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="logo"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" rx="1.5"/><rect x="13" y="2" width="9" height="9" rx="1.5"/><rect x="2" y="13" width="9" height="9" rx="1.5"/><rect x="13" y="13" width="9" height="9" rx="1.5"/></svg></div>
+  <div><h1>Lloyds Mortgage Calculator</h1><p>Get an estimate in minutes &mdash; no credit check required</p></div>
+</header>
+<div class="container">
+  <div class="scenario-bar">
+    <label for="scenario-select">&#128196; Load test scenario:</label>
+    <select id="scenario-select" onchange="loadScenario()">
+      <option value="">— Select a sample data scenario —</option>
+      <option value="basic">Basic Mortgage (£150,000 / 3.5% / 25yr Fixed)</option>
+      <option value="large">Large Loan Amount (£500,000 / 4.2% / 30yr)</option>
+      <option value="short">Shorter Term Loan (£200,000 / 3.0% / 15yr)</option>
+      <option value="highrate">High Interest Rate (£120,000 / 5.5% / 20yr)</option>
+      <option value="lowadj">Low Loan Adjustable Rate (£75,000 / 2.8% / 10yr)</option>
+      <option value="io">Interest-Only Mortgage (£250,000 / 4.0% / 25yr)</option>
+      <option value="highltv">High LTV 87.5% (£350,000 loan / £400,000 property)</option>
+      <option value="lowltv">Low LTV 40% (£100,000 loan / £250,000 property)</option>
+    </select>
+  </div>
+  <div class="steps">
+    <button class="step active" id="tab0" onclick="goStep(0)"><span class="snum">Step 1</span>Property details</button>
+    <button class="step" id="tab1" onclick="goStep(1)"><span class="snum">Step 2</span>Mortgage options</button>
+    <button class="step" id="tab2" onclick="goStep(2)"><span class="snum">Step 3</span>Your results</button>
+  </div>
+  <div class="panel active" id="panel0">
+    <div class="card">
+      <div class="card-title"><div class="card-icon">&#127968;</div>Property &amp; income</div>
+      <div class="row2">
+        <div class="field">
+          <label>Property value <span class="tooltip" tabindex="0">?<span class="tooltip-box">The estimated purchase price or current market value of the property.</span></span></label>
+          <div class="input-wrap"><span class="input-prefix">&pound;</span><input type="number" id="propVal" class="has-prefix" value="300000" min="10000" max="10000000" step="1000" oninput="onPropChange()"></div>
+          <div class="field-error" id="err-prop">Please enter a valid property value (min £10,000).</div>
+        </div>
+        <div class="field">
+          <label>Deposit <span class="tooltip" tabindex="0">?<span class="tooltip-box">The amount you pay upfront. A larger deposit usually means a better interest rate.</span></span></label>
+          <div class="input-wrap"><span class="input-prefix">&pound;</span><input type="number" id="deposit" class="has-prefix" value="60000" min="0" step="1000" oninput="onDepositChange()"></div>
+          <div class="field-hint" id="ltv-hint">LTV: 80% &mdash; Good deposit level</div>
+          <div class="field-error" id="err-deposit">Deposit cannot exceed property value.</div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:4px">
+        <label>Annual household income <span class="tooltip" tabindex="0">?<span class="tooltip-box">Combined gross annual income. Lenders typically offer 4&ndash;4.5x income as a maximum mortgage.</span></span></label>
+        <div class="input-wrap"><span class="input-prefix">&pound;</span><input type="number" id="income" class="has-prefix" value="65000" min="0" step="1000" oninput="updateBorrow()"></div>
+        <div class="field-hint" id="borrow-hint">Estimated borrowing limit: ~£260,000&ndash;£292,500</div>
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn-primary" onclick="toStep1()">Continue to mortgage options &rarr;</button></div>
+  </div>
+  <div class="panel" id="panel1">
+    <div class="card">
+      <div class="card-title"><div class="card-icon">&#128203;</div>Mortgage type <span class="tooltip" tabindex="0" style="margin-left:auto">?<span class="tooltip-box">Repayment: pay capital + interest monthly, own property at end. Interest-only: lower monthly payments but repay full loan at end of term.</span></span></div>
+      <div class="type-grid">
+        <div class="type-opt selected" id="opt-repay" onclick="selectType('repay')" role="button" tabindex="0">
+          <div class="type-opt-title">&#10003; Repayment</div><div class="type-opt-desc">Pay capital + interest monthly</div>
+        </div>
+        <div class="type-opt" id="opt-io" onclick="selectType('io')" role="button" tabindex="0">
+          <div class="type-opt-title">Interest only</div><div class="type-opt-desc">Lower payments, repay at end</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="card-icon">&#128200;</div>Rate &amp; term</div>
+      <div class="field">
+        <label>Mortgage term <span class="tooltip" tabindex="0">?<span class="tooltip-box">How long you have to repay. Longer terms = lower monthly payments but more interest overall.</span></span></label>
+        <div class="slider-wrap">
+          <input type="range" id="term" min="5" max="35" value="25" step="1" oninput="document.getElementById('term-val').textContent=this.value+' yrs'">
+          <div class="slider-val" id="term-val">25 yrs</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Interest rate <span class="tooltip" tabindex="0">?<span class="tooltip-box">Annual Equivalent Rate (AER). Your actual rate depends on your credit profile and chosen mortgage product.</span></span></label>
+        <div class="slider-wrap">
+          <input type="range" id="rate" min="0.5" max="12" value="4.5" step="0.1" oninput="document.getElementById('rate-val').textContent=parseFloat(this.value).toFixed(1)+'%'">
+          <div class="slider-val" id="rate-val">4.5%</div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="goStep(0)">&larr; Back</button>
+      <button class="btn-primary" onclick="calculate();goStep(2)">Calculate my results &rarr;</button>
+    </div>
+  </div>
+  <div class="panel" id="panel2">
+    <div class="results-hero">
+      <div class="hero-label">Estimated monthly payment</div>
+      <div class="hero-amount" id="res-monthly">&pound;0</div>
+      <div class="hero-sub" id="res-sub">Based on your inputs</div>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="m-label">Total repayable</div><div class="m-val" id="res-total">&mdash;</div></div>
+      <div class="metric"><div class="m-label">Total interest</div><div class="m-val" id="res-interest">&mdash;</div></div>
+      <div class="metric"><div class="m-label">Loan amount</div><div class="m-val" id="res-loan">&mdash;</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="card-icon">&#128202;</div>Payment breakdown</div>
+      <div class="breakdown-bar">
+        <div class="bar-p" id="bar-p" style="width:60%"></div>
+        <div class="bar-i" id="bar-i" style="width:38%"></div>
+        <div class="bar-f" style="width:2%"></div>
+      </div>
+      <div class="legend">
+        <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Principal repaid</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--green-mid)"></div>Interest paid</div>
+        <div class="leg"><div class="leg-dot" style="background:#ccc"></div>Fees (est.)</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="card-icon">&#128295;</div>Summary of assumptions</div>
+      <table class="adj-table">
+        <tr><td>Mortgage type</td><td><span class="badge" id="adj-type">Repayment</span></td></tr>
+        <tr><td>Term</td><td><span class="badge" id="adj-term">25 years</span></td></tr>
+        <tr><td>Interest rate</td><td><span class="badge" id="adj-rate">4.5%</span></td></tr>
+        <tr><td>LTV ratio</td><td><span class="badge" id="adj-ltv">80%</span></td></tr>
+        <tr><td>Max. borrowing (4.5x income)</td><td><span class="badge" id="adj-borrow">&mdash;</span></td></tr>
+      </table>
+    </div>
+    <div class="disclaimer">&#9432; This calculator provides an estimate only and does not constitute financial advice. Actual mortgage payments will vary based on your credit profile, lender criteria, fees, and prevailing rates. Always consult a qualified mortgage adviser. Lloyds Bank plc is authorised by the Prudential Regulation Authority and regulated by the Financial Conduct Authority.</div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="goStep(1)">&larr; Adjust options</button>
+      <button class="btn-primary" onclick="window.print()">&#128424; Save / Print results</button>
+    </div>
+    <div class="test-panel">
+      <h3>&#9881; Automated Test Suite &mdash; Sample Data Validation (mortgage_calculator_sample_data.xlsx)</h3>
+      <div id="test-output"><span class="test-info">Click "Run Tests" to validate all 8 scenarios from the sample data file.</span></div><br>
+      <button class="run-tests-btn" onclick="runTests()">&#9654; Run Tests</button>
+    </div>
+  </div>
+</div>
+<footer class="site-footer">Lloyds Banking Group &bull; Technology Engineering &bull; GreenField Homes Partnership &bull; &copy; 2026</footer>
+<script>
+let mortgageType='repay';
+const scenarios={
+  basic:{loan:150000,rate:3.5,term:25,type:'repay',prop:200000,dep:50000},
+  large:{loan:500000,rate:4.2,term:30,type:'repay',prop:600000,dep:100000},
+  short:{loan:200000,rate:3.0,term:15,type:'repay',prop:260000,dep:60000},
+  highrate:{loan:120000,rate:5.5,term:20,type:'repay',prop:160000,dep:40000},
+  lowadj:{loan:75000,rate:2.8,term:10,type:'repay',prop:100000,dep:25000},
+  io:{loan:250000,rate:4.0,term:25,type:'io',prop:320000,dep:70000},
+  highltv:{loan:350000,rate:4.5,term:30,type:'repay',prop:400000,dep:50000},
+  lowltv:{loan:100000,rate:3.75,term:20,type:'repay',prop:250000,dep:150000}
+};
+function loadScenario(){
+  const key=document.getElementById('scenario-select').value;
+  if(!key)return;
+  const s=scenarios[key];
+  document.getElementById('propVal').value=s.prop;
+  document.getElementById('deposit').value=s.dep;
+  document.getElementById('income').value=Math.round(s.loan/4);
+  document.getElementById('rate').value=s.rate;
+  document.getElementById('rate-val').textContent=s.rate.toFixed(1)+'%';
+  document.getElementById('term').value=s.term;
+  document.getElementById('term-val').textContent=s.term+' yrs';
+  selectType(s.type);
+  onPropChange();updateBorrow();goStep(0);
+}
+function goStep(n){
+  [0,1,2].forEach(i=>{
+    document.getElementById('panel'+i).classList.toggle('active',i===n);
+    const t=document.getElementById('tab'+i);
+    t.classList.remove('active','done');
+    if(i===n)t.classList.add('active');
+    else if(i<n)t.classList.add('done');
+  });
+}
+function toStep1(){
+  const pv=parseFloat(document.getElementById('propVal').value);
+  const d=parseFloat(document.getElementById('deposit').value);
+  let ok=true;
+  if(!pv||pv<10000){document.getElementById('err-prop').style.display='block';document.getElementById('propVal').classList.add('error');ok=false;}
+  else{document.getElementById('err-prop').style.display='none';document.getElementById('propVal').classList.remove('error');}
+  if(d>=pv){document.getElementById('err-deposit').style.display='block';document.getElementById('deposit').classList.add('error');ok=false;}
+  else{document.getElementById('err-deposit').style.display='none';document.getElementById('deposit').classList.remove('error');}
+  if(ok)goStep(1);
+}
+function onPropChange(){
+  const pv=parseFloat(document.getElementById('propVal').value)||0;
+  const d=parseFloat(document.getElementById('deposit').value)||0;
+  if(!pv)return;
+  const ltv=Math.round(((pv-d)/pv)*100);
+  let msg=ltv<=60?'Excellent &mdash; access to best rates':ltv<=75?'Good deposit level':ltv<=85?'Acceptable &mdash; slightly higher rates':ltv<=95?'High LTV &mdash; limited products available':'Deposit too low for most lenders';
+  document.getElementById('ltv-hint').innerHTML='LTV: '+Math.max(0,ltv)+'% &mdash; '+msg;
+}
+function onDepositChange(){onPropChange();}
+function updateBorrow(){
+  const inc=parseFloat(document.getElementById('income').value)||0;
+  document.getElementById('borrow-hint').innerHTML='Estimated borrowing limit: ~'+fmt(inc*4)+'&ndash;'+fmt(inc*4.5);
+}
+function selectType(t){
+  mortgageType=t;
+  document.getElementById('opt-repay').classList.toggle('selected',t==='repay');
+  document.getElementById('opt-io').classList.toggle('selected',t==='io');
+  document.getElementById('opt-repay').querySelector('.type-opt-title').textContent=(t==='repay'?'✓ ':'')+'Repayment';
+  document.getElementById('opt-io').querySelector('.type-opt-title').textContent=(t==='io'?'✓ ':'')+'Interest only';
+}
+function calcMonthly(loan,annualRate,termYears,type){
+  const r=annualRate/100/12,n=termYears*12;
+  if(type==='io')return loan*r;
+  if(r===0)return loan/n;
+  return loan*(r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1);
+}
+function fmt(n){return'£'+Math.round(n).toLocaleString('en-GB');}
+function calculate(){
+  const prop=parseFloat(document.getElementById('propVal').value)||300000;
+  const dep=parseFloat(document.getElementById('deposit').value)||60000;
+  const inc=parseFloat(document.getElementById('income').value)||65000;
+  const rate=parseFloat(document.getElementById('rate').value)||4.5;
+  const term=parseInt(document.getElementById('term').value)||25;
+  const loan=prop-dep;
+  const monthly=calcMonthly(loan,rate,term,mortgageType);
+  const total=monthly*term*12;
+  const interest=mortgageType==='repay'?total-loan:total;
+  const ltv=Math.round((loan/prop)*100);
+  const pPct=mortgageType==='repay'?Math.round((loan/total)*98):0;
+  const iPct=98-pPct;
+  document.getElementById('res-monthly').textContent=fmt(monthly)+'/mo';
+  document.getElementById('res-sub').textContent=rate.toFixed(1)+'% AER · '+term+' yr '+(mortgageType==='repay'?'repayment':'interest-only');
+  document.getElementById('res-total').textContent=fmt(total);
+  document.getElementById('res-interest').textContent=fmt(interest);
+  document.getElementById('res-loan').textContent=fmt(loan);
+  document.getElementById('bar-p').style.width=pPct+'%';
+  document.getElementById('bar-i').style.width=iPct+'%';
+  document.getElementById('adj-type').textContent=mortgageType==='repay'?'Repayment':'Interest only';
+  document.getElementById('adj-term').textContent=term+' years';
+  document.getElementById('adj-rate').textContent=rate.toFixed(1)+'%';
+  document.getElementById('adj-ltv').textContent=ltv+'%';
+  document.getElementById('adj-ltv').className='badge'+(ltv>85?' warn':'');
+  document.getElementById('adj-borrow').textContent=fmt(inc*4)+'–'+fmt(inc*4.5);
+}
+function runTests(){
+  const tests=[
+    {name:'Basic Mortgage',loan:150000,rate:3.5,term:25,type:'repay',expected:750.94},
+    {name:'Large Loan Amount',loan:500000,rate:4.2,term:30,type:'repay',expected:2445.09},
+    {name:'Shorter Term Loan',loan:200000,rate:3.0,term:15,type:'repay',expected:1381.16},
+    {name:'High Interest Rate',loan:120000,rate:5.5,term:20,type:'repay',expected:825.46},
+    {name:'Low Loan / Adjustable Rate',loan:75000,rate:2.8,term:10,type:'repay',expected:717.30},
+    {name:'Interest-Only Mortgage',loan:250000,rate:4.0,term:25,type:'io',expected:833.33},
+    {name:'High LTV (87.5%)',loan:350000,rate:4.5,term:30,type:'repay',expected:1773.40},
+    {name:'Low LTV (40%)',loan:100000,rate:3.75,term:20,type:'repay',expected:592.89},
+  ];
+  let out='',pass=0;
+  tests.forEach((t,i)=>{
+    const result=calcMonthly(t.loan,t.rate,t.term,t.type);
+    const diff=Math.abs(result-t.expected);
+    const ok=diff<1.0;
+    if(ok)pass++;
+    out+=`<span class="${ok?'test-pass':'test-fail'}">${ok?'✓ PASS':'✗ FAIL'}</span>  <span class="test-info">${i+1}. ${t.name}</span>\n`;
+    out+=`<span class="test-info">       Expected: £${t.expected.toFixed(2)}/mo  |  Got: £${result.toFixed(2)}/mo  |  Δ £${diff.toFixed(2)}</span>\n`;
+  });
+  out+=`\n<span class="test-info">─────────────────────────────────────────────</span>\n`;
+  out+=`<span class="${pass===tests.length?'test-pass':'test-fail'}">${pass}/${tests.length} tests passed${pass===tests.length?' — All scenarios validated ✓':''}</span>`;
+  document.getElementById('test-output').innerHTML=out;
+}
+onPropChange();updateBorrow();calculate();
+</script>
+</body>
+</html>
